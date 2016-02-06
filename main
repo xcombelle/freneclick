@@ -1,0 +1,255 @@
+#!/usr/bin/python2.7
+# -*-coding:Utf-8 -*
+
+#We have to do later: 
+#use differents modules to get a cleaner code
+#make the optional argument of the command line know as "n" work only with "--all" command
+#update the file that containes the fingerprints more often to reduce the number of closed exit-nodes
+
+
+#The followings modules are about the network.
+import urllib
+import urllib2
+import io
+import pycurl
+
+import stem.process
+import signal
+from stem.util import term
+import stem.socket
+import stem.connection
+#import stem.Signal
+
+#The following modules goal is to save the variable wich contain all the page in a file to work with it.
+import pickle
+import os
+import string
+
+#The followings modules is for use the programm in command line.
+import sys
+import argparse
+#import signal
+import optparse
+
+#The following modules permitte tor interact with javascript with selenium.
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+
+
+
+SOCKS_PORT = 7000
+#config = {'SocksPort': str(SOCKS_PORT), 'ExitNodes': '{ru}'}
+tor_exit_nodes_fingerprint_list = []
+saved_page = "foo"
+lines = []
+url = "https://www.atagar.com/echo.php"
+automatical_request_number = int()
+
+#Start an instance of Tor configured to only exit through Russia. This prints
+# Tor's bootstrap information as it starts. Note that this likely will not
+# work if you have another Tor instance running.
+
+def print_bootstrap_lines(line):
+  if "Bootstrapped " in line:
+    print(term.format(line, term.Color.BLUE))
+
+def query(url):
+    """
+    Uses pycurl to fetch a site using the proxy on the SOCKS_PORT.
+    """
+    output = io.BytesIO()
+
+    query = pycurl.Curl()
+    query.setopt(pycurl.URL, url)
+
+    query.setopt(pycurl.PROXY, 'localhost')
+    query.setopt(pycurl.PROXYPORT, SOCKS_PORT)
+    query.setopt(pycurl.PROXYTYPE, pycurl.PROXYTYPE_SOCKS5_HOSTNAME)
+    query.setopt(pycurl.WRITEFUNCTION, output.write)
+
+
+    try:
+        query.perform()
+        return output.getvalue()
+    except pycurl.error as exc:
+        return "Unable to reach %s (%s)" % (url, exc)
+
+def extract_fingerprints_from_the_document(road_to_the_complete_file):
+    #working on the document to exctact the fingerprint.
+    #print(term.format("Page saved. We are going to exctract the fingerprint keywords...\n", term.Attr.BOLD)
+    lines = []
+    with open(road_to_the_complete_file, "r") as reading:
+        lines = reading.readlines()
+        for (i, reading) in enumerate(lines):
+            print("We are reading the document...")
+            print(lines[i])
+            if "ExitNode " in lines[i]:                
+                tor_exit_nodes_fingerprint_list.append(lines[i].replace("ExitNode ", ""))
+                print("Added fingerprint number ")
+                print(tor_exit_nodes_fingerprint_list[-1])
+    return tor_exit_nodes_fingerprint_list
+
+def reintialize_the_file(used_circuit_road):
+    with open(used_circuit_road, "w") as cursor:
+        cursor.write("")
+     
+def launch_tor(config):
+    #Here we run Tor with this new config.
+    tor_process = stem.process.launch_tor_with_config(config, init_msg_handler = print_bootstrap_lines)
+    return tor_process
+   
+
+class Update:
+    def __init__(self):
+        self.config = {'SocksPort': str(SOCKS_PORT), 'ExitNodes': '{ru}'}
+        self.saved_page = "foo"
+
+    def save_complete_page(self, road_to_the_file, page):#The first argfument was 
+        #Saving the page in a file.
+        print(term.format("Page displayed! Now le put it in a file to save to work on it...", term.Attr.BOLD))
+        with open(road_to_the_file, "w") as cursor:
+            output = io.BytesIO()
+            c = pycurl.Curl()
+            c.setopt(pycurl.URL, url)
+            c.setopt(pycurl.PROXY, 'localhost')
+            c.setopt(pycurl.PROXYPORT, SOCKS_PORT)
+            c.setopt(pycurl.PROXYTYPE, pycurl.PROXYTYPE_SOCKS5_HOSTNAME)
+            c.setopt(c.URL, "https://check.torproject.org/exit-addresses")
+            c.setopt(c.WRITEDATA, cursor)
+            c.perform()
+            c.close()
+
+    def display_file(self, road_to_the_file):
+        print("The following page have been saved.")
+        with open(road_to_the_file, "r") as cursor:
+            text = cursor.read()
+        print(text)
+
+    def write_short_page(self, road_to_the_result_file, fingerprints):
+        #Make a file to save only the fingerprint to use the program first part without the network to run it faster.
+        with open(road_to_the_result_file, "wb") as cursor:
+           my_pickler = pickle.Pickler(cursor)
+           my_pickler.dump(fingerprints)
+           """for (i, cursor) in enumerate(fingerprints):
+               cursor.write(fingerprints[i])"""
+
+    def display_exctracted_fingerprint(self, fingerprints):
+        #Showing only the fingerprint to prove they are really and nicely exctracted.
+        print(term.format("The fingerprints are: \n", term.Attr.BOLD))
+        for i in range(0, len(fingerprints)):
+        #for i in enumerate fingerprints:
+            print(fingerprints[i])
+        return None
+
+    def run(self):
+        ##Run the differents methods of the class.
+        print(term.format("Starting Tor:\n", term.Attr.BOLD))
+        #Launch tor.
+        tor_process = stem.process.launch_tor_with_config(self.config, init_msg_handler = print_bootstrap_lines)
+        #Write the webpage into a local file.
+        self.save_complete_page("tor_exit_nodes_list", self.saved_page)
+        #Display the file.
+        self.display_file("tor_exit_nodes_list")
+        #Put the fingerprints from the great document to a list.
+        extract_fingerprints_from_the_document("tor_exit_nodes_list")
+        #Make a list only for the fingerprints.
+        reintialize_the_file("tor_fingerprint_short_list")
+        self.write_short_page("tor_fingerprint_short_list", tor_exit_nodes_fingerprint_list)
+        #Display a list of the tor exit nodes fingerprints.
+        self.display_exctracted_fingerprint(tor_exit_nodes_fingerprint_list)
+        print(term.format("\nWe are leaving Tor network.\n", term.Attr.BOLD))
+        tor_process.kill()
+
+class run_various_circuits_over_tor:
+    #def __init__(self):
+        #If the code is working with not the following instruction we could be able to delet the useless line: self.road_to_the_complete_file = "tor_exit_nodes_list"
+    
+    def display_tor_config(self, fingerprint_list, change):
+        #Befor running Tor we display the fingerprint the program is using and the fact we are running Tor network.
+        print(term.format("Starting Tor:\n", term.Attr.BOLD))
+        print("We are running the Tor network with the circuit with the fingerprint: ")
+        print(fingerprint_list[change])  
+        return None
+
+    def click_in(self, config, url):
+        print(term.format("\nChecking our endpoint:\n", term.Attr.BOLD))
+        print(term.format(query(url), term.Color.BLUE))
+        return None
+
+    def extract_fingerprints_from_the_short_document(self, road_to_the_short_file, reading_mod):
+        with open(road_to_the_short_file, "rb") as cursor:
+            my_unpickler = pickle.Unpickler(cursor)
+            liste = my_unpickler.load()
+        """lines = []
+        tor_exit_nodes_fingerprint_list = []
+        with open(road_to_the_short_file, "r") as reading:
+            lines = reading.readlines()
+            for (i, reading) in enumerate(lines):
+                tor_exit_nodes_fingerprint_list[i] = lines[i]"""
+        return liste
+
+    def add_the_fingerprint_to_the_list(self, used_circuits_road, fingerprint_to_write):
+        for i in range(len(fingerprint_to_write)):
+            with open(used_circuits_road, "a") as cursor:
+                cursor.write(fingerprint_to_write[i])
+        return None
+
+    """def click_in(self, tor_configuration):
+        tor_configuration.find_element_by_title("Ce message vous semble utile, votez !").click()
+        return None"""
+        
+
+#<a class="more" title="Ce message vous semble utile, votez !" actid="votep" href="javascript:void(0);"><a>
+
+    
+
+    def run(self, automatical_request_number, destination_of_the_request):
+        reintialize_the_file("non_used_circuits")
+        reintialize_the_file("used_circuits")
+        tor_exit_nodes_fingerprint_list = self.extract_fingerprints_from_the_short_document("tor_fingerprint_short_list", "rb")
+        for i in range(automatical_request_number):  
+            self.config = {'SocksPort': str(SOCKS_PORT), 'ExitNodes': '${0}'.format(tor_exit_nodes_fingerprint_list[i])}
+            self.display_tor_config(tor_exit_nodes_fingerprint_list, i)
+            try:
+                tor_process = stem.process.launch_tor_with_config(self.config, init_msg_handler = print_bootstrap_lines)
+
+
+                query(destination_of_the_request)
+                #Url example: 'http://www.commentcamarche.net/forum/_xhr_/vote/?parentx=1755019&cat=13&ID=1755037&vote=votep&_='
+                print("+1")
+
+                #finally click in the +1 button
+            except OSError:
+                print("The exit node ${0} could be disconnected or is too slow or there is another error.".format(tor_exit_nodes_fingerprint_list[i]))
+                self.add_the_fingerprint_to_the_list("non_used_circuits", tor_exit_nodes_fingerprint_list[i])
+                pass
+            finally:
+                tor_process.kill()  # stops tor
+            print("{0} request sent on {1}.".format(i + 1, automatical_request_number))
+        print("{0} sent.".format(automatical_request_number))
+
+action = sys.argv[0]
+parser = argparse.ArgumentParser(description="Make a bot click in the same +1 bottom over differents exit nodes to cheat the IP filtartion.")
+parser.add_argument("u", type=str, help = "The url of the webpage where the differents request will be sent.")
+parser.add_argument("-u", "--update", action="store_true", help="This action permittes to update the tor exit node fingerprint list not to waste time downloading the fingerprint list of course over tor network and work on a file to exctract it.")
+parser.add_argument("-c", "--circuit", help="Permit to the user to choose the number of request. For a usage example in case of +1 robot, the user should be able to choose the +1 he will send or do some experimentations.", action = "store_true")
+parser.add_argument("n", type=int, nargs="?", help = "The number of differents tor circuits used to send the same request.") #optional option (only if and after we use --choose-number option). Example: required=False.
+parser.add_argument("-a", "--all", action="store_true", help="This action or more like this option actually, permittes to the user to use every connected and online exit nodes.")
+
+args = parser.parse_args()
+url = args.u
+
+## Main.
+update_instance = Update()
+circuit_instance = run_various_circuits_over_tor()
+if args.update:    
+    update_instance.run()
+
+if args.circuit:
+    automatical_request_number = args.n
+    circuit_instance.run(automatical_request_number, url)
+elif args.all:
+    circuit_instance.run(len(tor_exit_nodes_fingerprint_list), url)
+else:
+    print("Please choose at least one option between '--all' and '--circuit' + number of the exit nodes.")

@@ -5,6 +5,9 @@
 #use differents modules to get a cleaner code
 #make the optional argument of the command line know as "n" work only with "--all" command
 #update the file that containes the fingerprints more often to reduce the number of closed exit-nodes
+#utiliser flake8
+#placer if __name__ == "__main__"
+# #!/usr/bin/env
 
 
 #The followings modules are about the network.

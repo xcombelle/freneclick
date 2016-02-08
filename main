@@ -203,7 +203,7 @@ class run_various_circuits_over_tor:
         return None"""
         
 
-#<a class="more" title="Ce message vous semble utile, votez !" actid="votep" href="javascript:void(0);"><a>
+
 
     
 
@@ -219,7 +219,6 @@ class run_various_circuits_over_tor:
 
 
                 query(destination_of_the_request)
-                #Url example: 'http://www.commentcamarche.net/forum/_xhr_/vote/?parentx=1755019&cat=13&ID=1755037&vote=votep&_='
                 print("+1")
 
                 #finally click in the +1 button

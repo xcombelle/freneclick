@@ -8,7 +8,8 @@
 #utiliser flake8
 #placer if __name__ == "__main__"
 # #!/usr/bin/env
-
+#line 236: come back to the bloc try without rewrite all the code.
+#review globally the code to understand nicely how to use the exception's rises in the run function of the run_over_various_circuits class.
 
 #The followings modules are about the network.
 import urllib
@@ -42,20 +43,18 @@ from selenium.webdriver.common.by import By
 
 
 SOCKS_PORT = 7000
-#config = {'SocksPort': str(SOCKS_PORT), 'ExitNodes': '{ru}'}
 tor_exit_nodes_fingerprint_list = []
 saved_page = "foo"
 lines = []
 url = "https://www.atagar.com/echo.php"
 automatical_request_number = int()
+click = 0
 
-#Start an instance of Tor configured to only exit through Russia. This prints
-# Tor's bootstrap information as it starts. Note that this likely will not
-# work if you have another Tor instance running.
 
 def print_bootstrap_lines(line):
-  if "Bootstrapped " in line:
-    print(term.format(line, term.Color.BLUE))
+    #Color the text in blue
+    if "Bootstrapped " in line:
+        print(term.format(line, term.Color.BLUE))
 
 def query(url):
     """
@@ -78,9 +77,10 @@ def query(url):
     except pycurl.error as exc:
         return "Unable to reach %s (%s)" % (url, exc)
 
-def extract_fingerprints_from_the_document(road_to_the_complete_file):
-    #working on the document to exctact the fingerprint.
-    #print(term.format("Page saved. We are going to exctract the fingerprint keywords...\n", term.Attr.BOLD)
+def extract_fingerprints_from_the_brut_page(road_to_the_complete_file):
+    """working on the brut document to exctract all the fingerprints and get into in a list.
+
+    make a new list know as lines, open the file that tha path correspond to the first argument, give to the first element of the list know as lines all the first line, make a new while that increment the i variable and continue to read the code over this while since we do not read every line of the document. Send a message and read the line of the document over the reading of the list know as lines. Find the elment that is the fingerprint analysing the form of the returned text. Return the fingerprint that we had exctracted."""
     lines = []
     with open(road_to_the_complete_file, "r") as reading:
         lines = reading.readlines()
@@ -92,24 +92,34 @@ def extract_fingerprints_from_the_document(road_to_the_complete_file):
                 print("Added fingerprint number ")
                 print(tor_exit_nodes_fingerprint_list[-1])
     return tor_exit_nodes_fingerprint_list
-
-def reintialize_the_file(used_circuit_road):
-    with open(used_circuit_road, "w") as cursor:
-        cursor.write("")
      
 def launch_tor(config):
     #Here we run Tor with this new config.
     tor_process = stem.process.launch_tor_with_config(config, init_msg_handler = print_bootstrap_lines)
     return tor_process
+
+"""def run_as_server(road_unused_nodes):
+    with open(road_unused_nodes, "rb") as cursor:"""
+
+
+def save_element(used_circuits_road, element):
+    """save an element into a file to use this one in another section."""
+    with open(used_circuits_road, "wb") as cursor:
+        my_pickle = pickle.Pickler(cursor)
+        my_pickle.dump(element)
+    return None
    
 
 class Update:
+    """This class is about update the list of exit nodes to limit the number of closed nodes. """
     def __init__(self):
         self.config = {'SocksPort': str(SOCKS_PORT), 'ExitNodes': '{ru}'}
         self.saved_page = "foo"
 
-    def save_complete_page(self, road_to_the_file, page):#The first argfument was 
-        #Saving the page in a file.
+    def save_brut_page(self, road_to_the_file, page):
+        """Save the website about the exit nodes in a local file over tor.
+
+        First send a message to the user to learn him the state of the advancement of the progress. In a second time, open the file. After that, use pycurl to write everything in this one with tor used as a proxy. Collect the data in a local file. And at last but not least close the document."""
         print(term.format("Page displayed! Now le put it in a file to save to work on it...", term.Attr.BOLD))
         with open(road_to_the_file, "w") as cursor:
             output = io.BytesIO()
@@ -124,112 +134,145 @@ class Update:
             c.close()
 
     def display_file(self, road_to_the_file):
-        print("The following page have been saved.")
+        """Affiche le resultat de la lecture d'un fichier non-binaire."""        
         with open(road_to_the_file, "r") as cursor:
             text = cursor.read()
         print(text)
 
-    def write_short_page(self, road_to_the_result_file, fingerprints):
-        #Make a file to save only the fingerprint to use the program first part without the network to run it faster.
+    def save_element(self, road_to_the_result_file, fingerprints):
+        """save the fingerprints to use the program first part without the network to run it faster."""
         with open(road_to_the_result_file, "wb") as cursor:
            my_pickler = pickle.Pickler(cursor)
            my_pickler.dump(fingerprints)
-           """for (i, cursor) in enumerate(fingerprints):
-               cursor.write(fingerprints[i])"""
 
-    def display_exctracted_fingerprint(self, fingerprints):
-        #Showing only the fingerprint to prove they are really and nicely exctracted.
+    def display_list(self, fingerprints):
+        """Show the fingerprint to prove they are really and nicely exctracted."""
         print(term.format("The fingerprints are: \n", term.Attr.BOLD))
         for i in range(0, len(fingerprints)):
-        #for i in enumerate fingerprints:
             print(fingerprints[i])
         return None
 
     def run(self):
-        ##Run the differents methods of the class.
+        """Run the differents methods of the class."""
+        #send a message to the user to warn him tor is starting.
         print(term.format("Starting Tor:\n", term.Attr.BOLD))
         #Launch tor.
         tor_process = stem.process.launch_tor_with_config(self.config, init_msg_handler = print_bootstrap_lines)
         #Write the webpage into a local file.
-        self.save_complete_page("tor_exit_nodes_list", self.saved_page)
+        self.save_brut_page("tor_exit_nodes_list", self.saved_page)
+        #Send a message to the user that tell him about the situation of the program execution ("the following page have been saved").
+        print("The following page have been saved.")
         #Display the file.
         self.display_file("tor_exit_nodes_list")
         #Put the fingerprints from the great document to a list.
-        extract_fingerprints_from_the_document("tor_exit_nodes_list")
+        extract_fingerprints_from_the_brut_page("tor_exit_nodes_list")
         #Make a list only for the fingerprints.
-        reintialize_the_file("tor_fingerprint_short_list")
-        self.write_short_page("tor_fingerprint_short_list", tor_exit_nodes_fingerprint_list)
+        self.save_element("tor_fingerprint_short_list", tor_exit_nodes_fingerprint_list)
         #Display a list of the tor exit nodes fingerprints.
-        self.display_exctracted_fingerprint(tor_exit_nodes_fingerprint_list)
+        self.display_list(tor_exit_nodes_fingerprint_list)
+        #Warn the user we leave the tor network.
         print(term.format("\nWe are leaving Tor network.\n", term.Attr.BOLD))
+        #Kill the tor process.
         tor_process.kill()
+        #Warn the user the update is finished.
+        print("The update is finished.")
 
 class run_various_circuits_over_tor:
+    """This class is about the launching and the using of the tor network."""
     #def __init__(self):
         #If the code is working with not the following instruction we could be able to delet the useless line: self.road_to_the_complete_file = "tor_exit_nodes_list"
     
     def display_tor_config(self, fingerprint_list, change):
-        #Befor running Tor we display the fingerprint the program is using and the fact we are running Tor network.
+        """Before running Tor we display the fingerprint that the program is using and the fact we are running Tor network."""
         print(term.format("Starting Tor:\n", term.Attr.BOLD))
         print("We are running the Tor network with the circuit with the fingerprint: ")
         print(fingerprint_list[change])  
         return None
 
     def click_in(self, config, url):
+        """Send a quest with not return nothing."""
         print(term.format("\nChecking our endpoint:\n", term.Attr.BOLD))
         print(term.format(query(url), term.Color.BLUE))
         return None
 
-    def extract_fingerprints_from_the_short_document(self, road_to_the_short_file, reading_mod):
+    def load_element(self, road_to_the_short_file):
+        """Load an element from a binary file."""
         with open(road_to_the_short_file, "rb") as cursor:
             my_unpickler = pickle.Unpickler(cursor)
             liste = my_unpickler.load()
-        """lines = []
-        tor_exit_nodes_fingerprint_list = []
-        with open(road_to_the_short_file, "r") as reading:
-            lines = reading.readlines()
-            for (i, reading) in enumerate(lines):
-                tor_exit_nodes_fingerprint_list[i] = lines[i]"""
         return liste
 
     def add_the_fingerprint_to_the_list(self, used_circuits_road, fingerprint_to_write):
+        """Add to a file a new line."""
         for i in range(len(fingerprint_to_write)):
             with open(used_circuits_road, "a") as cursor:
                 cursor.write(fingerprint_to_write[i])
         return None
-
-    """def click_in(self, tor_configuration):
-        tor_configuration.find_element_by_title("Ce message vous semble utile, votez !").click()
-        return None"""
-        
-
-
-
     
 
     def run(self, automatical_request_number, destination_of_the_request):
-        reintialize_the_file("non_used_circuits")
-        reintialize_the_file("used_circuits")
-        tor_exit_nodes_fingerprint_list = self.extract_fingerprints_from_the_short_document("tor_fingerprint_short_list", "rb")
-        for i in range(automatical_request_number):  
+        """Run the part of the program that change circuit and send a quest over this one."""
+
+        ###Reapeat as long as we have not sent enough quest.     
+        for i in range(automatical_request_number):
+            #change the tor process configuration to choose the next node.
             self.config = {'SocksPort': str(SOCKS_PORT), 'ExitNodes': '${0}'.format(tor_exit_nodes_fingerprint_list[i])}
+            #Alert the user we change node and give the fingerprint of the selected node.
             self.display_tor_config(tor_exit_nodes_fingerprint_list, i)
+            ##Try to launch tor and to send a signal to simulate a click.
             try:
                 tor_process = stem.process.launch_tor_with_config(self.config, init_msg_handler = print_bootstrap_lines)
 
-
                 query(destination_of_the_request)
-                print("+1")
-
-                #finally click in the +1 button
+            
+            #If the node is disconnected, alert the user, write some logs in him local computer and continue the program (run another circuit and co).
             except OSError:
                 print("The exit node ${0} could be disconnected or is too slow or there is another error.".format(tor_exit_nodes_fingerprint_list[i]))
-                self.add_the_fingerprint_to_the_list("non_used_circuits", tor_exit_nodes_fingerprint_list[i])
+                save_element("non_used_circuits_database", tor_exit_nodes_fingerprint_list[i])
+                self.add_the_fingerprint_to_the_list("non_used_circuits_user_interface", tor_exit_nodes_fingerprint_list[i])
                 pass
+            #If all is fine, 
+            else:
+            click += 1
+                try:
+                    with open("non_used_circuits_database", "rb") as cursor:
+                        my_unpickler = pickle.Unpickler(cursor)
+                        unused_node = my_unpickler.load()
+                        for j in cursor:
+                            if unused_node[j] == tor_exit_nodes_fingerprint_list[i]:
+                                unused_node -= unused_node[j]
+                                print("We found a exit node that have been closed but that have finally open again now. We remove it from the list.")
+                                with open("non_used_circuits_database", "wb") as cursor:
+                                    my_pickle = pickle.Pickler(cursor)
+                                    my_pickle.dump(unused_node)
+                                with open("non_used_circuits_user_interface", "w") as cursor:
+                                    for k in cursor:
+                                        cursor.write(unused_node[k] + "\n")
+                except (IOError, EOFError):
+                    print("creation of the file know as non_used_circuits_database")
+                    text = open("non_used_circuits_database", "wb")
+                    text.close()
+                    """with open("non_used_circuits_database", "rb") as cursor:
+                        my_unpickler = pickle.Unpickler(cursor)
+                        unused_node = my_unpickler.load()
+                        for j in cursor:
+                            if unused_node[j] == tor_exit_nodes_fingerprint_list[i]:
+                                unused_node -= unused_node[j]
+                                print("We found a exit node that have been closed but that have finally open again now. We remove it from the list.")
+                                with open("non_used_circuits_database", "wb") as cursor:
+                                    my_pickle = pickle.Pickler(cursor)
+                                    my_pickle.dump(unused_node)
+                                with open("non_used_circuits_user_interface", "w") as cursor:
+                                    for k in cursor:
+                                        cursor.write(unused_node[k] + "\n")"""
+                    pass
+                print("+1")
+                save_element("used_circuits_database", tor_exit_nodes_fingerprint_list[i])
+                self.add_the_fingerprint_to_the_list("used_circuits_user_interface", tor_exit_nodes_fingerprint_list[i])
             finally:
                 tor_process.kill()  # stops tor
             print("{0} request sent on {1}.".format(i + 1, automatical_request_number))
-        print("{0} sent.".format(automatical_request_number))
+        print("{0} successfully sent.".format(click))
 
 action = sys.argv[0]
 parser = argparse.ArgumentParser(description="Make a bot click in the same +1 bottom over differents exit nodes to cheat the IP filtartion.")
@@ -238,6 +281,7 @@ parser.add_argument("-u", "--update", action="store_true", help="This action per
 parser.add_argument("-c", "--circuit", help="Permit to the user to choose the number of request. For a usage example in case of +1 robot, the user should be able to choose the +1 he will send or do some experimentations.", action = "store_true")
 parser.add_argument("n", type=int, nargs="?", help = "The number of differents tor circuits used to send the same request.") #optional option (only if and after we use --choose-number option). Example: required=False.
 parser.add_argument("-a", "--all", action="store_true", help="This action or more like this option actually, permittes to the user to use every connected and online exit nodes.")
+parser.add_argument("-s", "--server", action="store_true", help="Turn the computer of the user into server since the unusable exit nodes are open.")
 
 args = parser.parse_args()
 url = args.u
@@ -245,13 +289,22 @@ url = args.u
 ## Main.
 update_instance = Update()
 circuit_instance = run_various_circuits_over_tor()
+
+
+
 if args.update:    
     update_instance.run()
 
 if args.circuit:
     automatical_request_number = args.n
+    tor_exit_nodes_fingerprint_list = circuit_instance.load_element("tor_fingerprint_short_list")
     circuit_instance.run(automatical_request_number, url)
-elif args.all:
+elif args.all:    
     circuit_instance.run(len(tor_exit_nodes_fingerprint_list), url)
+    if args.server:
+        tor_exit_nodes_fingerprint_list = circuit_instance.load_element("non_used_circuits_database")
+        while len(unused_node) != 0:
+            circuit_instance.run(len(tor_exit_nodes_fingerprint_list), url)
+
 else:
     print("Please choose at least one option between '--all' and '--circuit' + number of the exit nodes.")

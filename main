@@ -239,8 +239,8 @@ class run_various_circuits_over_tor:
                 pass
             ###If all is fine, 
             else:
-            #increment a meter that represent the successfull passage number of the query.
-            click += 1
+                #increment a meter that represent the successfull passage number of the query.
+                click += 1
                 #Try, 
                 try:
                     #Open the binary file of the fallen circuits and load him element (the fallen circuits list).

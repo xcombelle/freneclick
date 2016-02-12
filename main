@@ -2,6 +2,8 @@
 # -*-coding:Utf-8 -*
 
 #We have to do later: 
+
+#We have to do later: 
 #use differents modules to get a cleaner code
 #make the optional argument of the command line know as "n" work only with "--all" command
 #update the file that containes the fingerprints more often to reduce the number of closed exit-nodes
@@ -10,6 +12,10 @@
 # #!/usr/bin/env
 #line 236: come back to the bloc try without rewrite all the code.
 #review globally the code to understand nicely how to use the exception's rises in the run function of the run_over_various_circuits class.
+
+#line 236: come back to the bloc try without rewrite all the code.
+#review globally the code to understand nicely how to use the exception's rises in the run function of the run_over_various_circuits class.
+
 
 #The followings modules are about the network.
 import urllib
@@ -231,27 +237,36 @@ class run_various_circuits_over_tor:
                 save_element("non_used_circuits_database", tor_exit_nodes_fingerprint_list[i])
                 self.add_the_fingerprint_to_the_list("non_used_circuits_user_interface", tor_exit_nodes_fingerprint_list[i])
                 pass
-            #If all is fine, 
+            ###If all is fine, 
             else:
+            #increment a meter that represent the successfull passage number of the query.
             click += 1
+                #Try, 
                 try:
+                    #Open the binary file of the fallen circuits and load him element (the fallen circuits list).
                     with open("non_used_circuits_database", "rb") as cursor:
                         my_unpickler = pickle.Unpickler(cursor)
                         unused_node = my_unpickler.load()
-                        for j in cursor:
+                        #Repeat while we did not travel every element of the list know as unused_node.
+                        for j in range(unused_node):
+                            #If the browsed element of the list is the same elemnt of the running exit node, we remove this element from the first list. 
                             if unused_node[j] == tor_exit_nodes_fingerprint_list[i]:
-                                unused_node -= unused_node[j]
+                                unused_node.remove(unused_node[j])
                                 print("We found a exit node that have been closed but that have finally open again now. We remove it from the list.")
+                                #Write the binary list of the fallen circuits.
                                 with open("non_used_circuits_database", "wb") as cursor:
                                     my_pickle = pickle.Pickler(cursor)
                                     my_pickle.dump(unused_node)
+                                #Write the human readable list of the fallen circuits.
                                 with open("non_used_circuits_user_interface", "w") as cursor:
                                     for k in cursor:
                                         cursor.write(unused_node[k] + "\n")
+                #
                 except (IOError, EOFError):
-                    print("creation of the file know as non_used_circuits_database")
+                    pass
+                    """print("creation of the file know as non_used_circuits_database")
                     text = open("non_used_circuits_database", "wb")
-                    text.close()
+                    text.close()"""
                     """with open("non_used_circuits_database", "rb") as cursor:
                         my_unpickler = pickle.Unpickler(cursor)
                         unused_node = my_unpickler.load()
@@ -264,8 +279,8 @@ class run_various_circuits_over_tor:
                                     my_pickle.dump(unused_node)
                                 with open("non_used_circuits_user_interface", "w") as cursor:
                                     for k in cursor:
-                                        cursor.write(unused_node[k] + "\n")"""
-                    pass
+                                        cursor.write(unused_node[k] + "\n")
+                    pass"""
                 print("+1")
                 save_element("used_circuits_database", tor_exit_nodes_fingerprint_list[i])
                 self.add_the_fingerprint_to_the_list("used_circuits_user_interface", tor_exit_nodes_fingerprint_list[i])
@@ -291,19 +306,35 @@ update_instance = Update()
 circuit_instance = run_various_circuits_over_tor()
 
 
-
+#if the user checks --update, fingerprint list is saved from the official tor website.
 if args.update:    
     update_instance.run()
 
+#If the user choose the number of circuits...
 if args.circuit:
+    #The programme taks the argument know as [n] write by the user.
     automatical_request_number = args.n
+    #read the list of EVERY seen exit nodes and save it as a list.
     tor_exit_nodes_fingerprint_list = circuit_instance.load_element("tor_fingerprint_short_list")
+    #run the program that pass over different exit nodes and click in and the number of passage is limited to the argument written by the user.
     circuit_instance.run(automatical_request_number, url)
+    #If the user has choosen to turn his computer as a server...
+    if args.server:
+        #Load the list of the tor fingerprints's exit nodes.
+        tor_exit_nodes_fingerprint_list = circuit_instance.load_element("non_used_circuits_database")
+        #And read again as long as every nodes have really been read successfully.
+        while len(tor_exit_nodes_fingerprint_list) != 0:
+            circuit_instance.run(len(tor_exit_nodes_fingerprint_list), url)
+#If the user chooses to pass over every visible tor exit node...
 elif args.all:    
+    #Send a query over every know exit nodes.
     circuit_instance.run(len(tor_exit_nodes_fingerprint_list), url)
     if args.server:
+        #Load a list of the fallen exit nodes.
         tor_exit_nodes_fingerprint_list = circuit_instance.load_element("non_used_circuits_database")
+        #While there is still at least one tor's exit nodes...
         while len(unused_node) != 0:
+            #Click in the target over every badly exited tor's exit node.
             circuit_instance.run(len(tor_exit_nodes_fingerprint_list), url)
 
 else:

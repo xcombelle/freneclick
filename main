@@ -264,24 +264,6 @@ class run_various_circuits_over_tor:
                 #
                 except (IOError, EOFError):
                     pass
-                    """print("creation of the file know as non_used_circuits_database")
-                    text = open("non_used_circuits_database", "wb")
-                    text.close()"""
-                    """with open("non_used_circuits_database", "rb") as cursor:
-                        my_unpickler = pickle.Unpickler(cursor)
-                        unused_node = my_unpickler.load()
-                        for j in cursor:
-                            if unused_node[j] == tor_exit_nodes_fingerprint_list[i]:
-                                unused_node -= unused_node[j]
-                                print("We found a exit node that have been closed but that have finally open again now. We remove it from the list.")
-                                with open("non_used_circuits_database", "wb") as cursor:
-                                    my_pickle = pickle.Pickler(cursor)
-                                    my_pickle.dump(unused_node)
-                                with open("non_used_circuits_user_interface", "w") as cursor:
-                                    for k in cursor:
-                                        cursor.write(unused_node[k] + "\n")
-                    pass"""
-                print("+1")
                 save_element("used_circuits_database", tor_exit_nodes_fingerprint_list[i])
                 self.add_the_fingerprint_to_the_list("used_circuits_user_interface", tor_exit_nodes_fingerprint_list[i])
             finally:
